@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>News Conversational Chat Bot with RAG and Pinecone</title>
+    <link href="http://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-bootstrap@next/dist/react-bootstrap.min.js" crossorigin></script>
+    <style>
+        /* Chatbot.css */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            /* Adjust height according to your design */
+        }
+
+        .message-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .message {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            padding: 8px 12px;
+            border-radius: 20px;
+            max-width: 70%;
+        }
+
+        .bot .message-content {
+            background-color: #e0e0e0;
+        }
+
+        .user .message-content {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script type="text/babel">
+        const session = performance.now();
+        const Modal = ReactBootstrap.Modal;
+        const Spinner = ReactBootstrap.Spinner;
+        /*const Button = ReactBootstrap.Button;
+        const Card = ReactBootstrap.Card;*/
+        const useState = React.useState;
+        const useRef = React.useRef;
+        const useEffect = React.useEffect;
+        const Chatbot = () => {
+            const [messages, setMessages] = useState([]);
+            const [newMessage, setNewMessage] = useState('');
+            const messagesEndRef = useRef(null);
+            const [show, setShow] = useState(false);
+
+            const scrollToBottom = () => {
+                if (messagesEndRef.current) {
+                    messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+
+            useEffect(() => {
+                scrollToBottom();
+            }, [messages]);
+
+            const handleNewMessageChange = (event) => {
+                setNewMessage(event.target.value);
+            };
+
+            const handleSendMessage = () => {
+                if (newMessage.trim() === '') return;
+                setShow(true);
+
+                const updatedMessages = [...messages, { text: newMessage, sender: 'user' }];
+                setMessages(updatedMessages);
+                setNewMessage('');
+                // Here you can add logic to handle bot responses
+                // For demonstration, let's simulate a bot response after a delay
+                const formData = new FormData();
+                formData.append("user_input", newMessage);
+                formData.append("session", session);
+                fetch("/api/message", {
+                    method: 'post',
+                    body: formData,
+                })
+                    .then(async (response) => {
+                        if (response.status == 200) {
+                            const json = await response.json();
+                            const botMessage = { text: json.botResponse, sender: 'bot' };
+                            setMessages([...updatedMessages, botMessage]);
+                        }
+                        setShow(false);
+                    })
+                    .catch(err => setShow(false));
+            };
+
+            const handleKeyDown = (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleSendMessage();
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="chat-container">
+                        <div className="message-container">
+                            {messages.map((message, index) => (
+                                <div key={index} className={`message ${message.sender}`}>
+                                    <div className="message-content">{message.text}</div>
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
+                        <div className="input-group mb-3">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Type a message..."
+                                value={newMessage}
+                                onChange={handleNewMessageChange}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <button className="btn btn-primary" onClick={handleSendMessage}>
+                                Send
+                            </button>
+                        </div>
+                    </div>
+                    <Modal show={show}>
+                        <Modal.Header>
+                            <Modal.Title>Please wait</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>Bot is now trying to generate the answer of your question. It could take up to 20 minutes depending on your cpu and RAM. <Spinner animation="border" /></Modal.Body>
+                    </Modal>
+                </div>
+            );
+        };
+        ReactDOM.render(
+            <Chatbot />,
+            document.getElementById("root")
+        );
+    </script>
+</body>
+
+</html>

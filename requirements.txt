@@ -1,0 +1,15 @@
+pyppeteer==1.0.2
+pyppeteer-stealth==2.7.4
+bs4==0.0.1
+beautifulsoup4==4.12.2
+langchain==0.0.330
+pypdf==3.17.0
+pinecone-client==2.2.4
+html2text==2020.1.16
+aiofiles==23.2.1
+chardet==5.2.0
+bleach==6.1.0
+fastapi==0.104.1
+uvicorn==0.24.0.post1
+llama_cpp_python==0.2.13
+python-multipart==0.0.6
