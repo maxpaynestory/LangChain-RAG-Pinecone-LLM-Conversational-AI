@@ -16,6 +16,7 @@ from langchain.schema import Document
 from langchain.llms import LlamaCpp
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain.retrievers import ContextualCompressionRetriever
 import pinecone
 from bs4 import BeautifulSoup
 import html2text
@@ -53,6 +54,10 @@ def load_model():
         verbose=False,  # Verbose is required to pass to the callback manager
         n_ctx=2000,
     )
+    return llm
+
+
+def get_chain(llm):
     instruction = "{searched_context} \n\nUser: {user_input} \n\nAljazeera:"
     template = get_prompt(instruction)
     prompt = PromptTemplate(
@@ -67,9 +72,13 @@ def load_model():
 
 
 def send_message(
-    session, user_input, llm_chain: LLMChain, vector_store: Pinecone
+    session,
+    user_input,
+    compression_retriever: ContextualCompressionRetriever,
+    llm_chain: LLMChain,
+    vector_store: Pinecone,
 ) -> str:
-    docs = vector_store.similarity_search(user_input)
+    docs = compression_retriever.get_relevant_documents(user_input)
     context = ""
     for docs in docs:
         context += docs.page_content
@@ -157,8 +166,8 @@ def fill_pinecone(download_folder):
     for doc in docs:
         text_splitter = RecursiveCharacterTextSplitter(
             # Set a really small chunk size, just to show.
-            chunk_size=1000,
-            chunk_overlap=20,
+            chunk_size=50,
+            chunk_overlap=10,
             length_function=len,
             is_separator_regex=False,
         )
