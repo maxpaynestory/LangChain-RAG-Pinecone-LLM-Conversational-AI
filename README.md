@@ -1,3 +1,5 @@
+**In the name of ALLAH, who has guided me to do this work**
+
 # LangChain RAG Pinecone Conversational AI news bot.
 A conversational bot which impersonates Aljazeera English news Channel. Scraped a few pages from Aljazeera news website and fed it to LlaMA 2 using RAG. Pinecone is used as vector database.
 
